@@ -167,7 +167,7 @@ function rotate3D(v, ax, rad) { //v is the r3 vector, ax is the unit r3 vector o
 }
 
 
-//hyperbola functions
+//hyperbola related functions
 
 function hyperbolicBilinear(u, v) {
 	if(u.length !== v.length) {
@@ -184,7 +184,17 @@ function hyperbolicBilinear(u, v) {
 	return innerProduct;
 }
 
+function projectToPoincare(p) { //projects point onto poincare disc/ball
+	var pointcare = []; //play on words, but will be a vector representing the projected point
+	for(var d = 1; d < p.length; d++) {
+		pointcare[d-1] = p[d]/(1+p[0]);
+	}
+	return pointcare;
+}
+
+
 //hyperboloid plotting functions
+
 function generateAngleSamples(numSamples, min, max) { //[min, max)
 	var angles = [];
 	for(var ang = 0; ang < numSamples; ang++) {
@@ -270,20 +280,12 @@ function generateHyperboloidSamplePoints(dim, ptsPerRev) { //do not do a lot, al
 	return samplePoints;
 }
 
-function generateGeodesicSamplePoints(range, separation) { //generates geodesic sample points between u & v
+function generateGeodesicSamplePoints(range, separation) { //generates geodesic sample points between u & v on the hyperboloid
 	points = [];
 	for(var w = -range; w <= range; w += separation) {
 		points.push(add(scale(Math.cosh(w), u), scale(Math.sinh(w), v)));
 	}
 	return points;
-}
-
-function projectToPoincare(p) { //projects point onto poincare disc/ball
-	var pointcare = []; //play on words, but will be a vector representing the projected point
-	for(var d = 1; d < p.length; d++) {
-		pointcare[d-1] = p[d]/(1+p[0]);
-	}
-	return pointcare;
 }
 
 
