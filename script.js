@@ -45,7 +45,7 @@ var u, //user chosen point on hyperboloid
 
 var pu, //poincare u
 	pv; //poincare v
-var isGrabbingPt = []; //bool array storing whether or not point is being grabbed, [pu, pv]
+var isGrabbingPt; //bool array storing whether or not point is being grabbed, [pu, pv]
 
 
 var hyperboloidPoints = []; //used to plot hyperboloid
@@ -653,10 +653,10 @@ function init() {
 			mouseY = -(window.pageYOffset-hs.offsetTop + event.clientY - hs.height/2);
 			var delX = (mouseX-preX)/scl,
 				delY = (mouseY-preY)/scl;
-			if((Math.round(16*mouseX/scl) == Math.round(16*project(pu, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pu, 2)[1])) || isGrabbingPt[0]) { //mouse over u, *25 to give the mouse a range over which point is grabbable
+			if((Math.round(16*mouseX/scl) == Math.round(16*project(pu, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pu, 2)[1]) && (isGrabbingPt === -1 || isGrabbingPt === undefined)) || isGrabbingPt === 0) { //mouse over u, *25 to give the mouse a range over which point is grabbable
 				hs.style.cursor = "pointer";
 				if(mouseDown) {
-					isGrabbingPt[0] = true;
+					isGrabbingPt = 0;
 					//n = 2, so:
 					if((pu[0] + delX)*(pu[0] + delX) + (pu[1] + delY)*(pu[1] + delY) <= 1) {
 						pu[0] += delX;
@@ -673,10 +673,10 @@ function init() {
 					displayHS();
 				}
 			}
-			else if((Math.round(16*mouseX/scl) == Math.round(16*project(pv, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pv, 2)[1])) || isGrabbingPt[1]) { //mouse over v, *25 to give the mouse a range over which point is grabbable
+			else if((Math.round(16*mouseX/scl) == Math.round(16*project(pv, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pv, 2)[1]) && (isGrabbingPt === -1 || isGrabbingPt === undefined)) || isGrabbingPt === 1) { //mouse over v, *25 to give the mouse a range over which point is grabbable
 				hs.style.cursor = "pointer";
 				if(mouseDown) {
-					isGrabbingPt[1] = true;
+					isGrabbingPt = 1;
 					//n = 2, so:
 					if((pv[0] + delX)*(pv[0] + delX) + (pv[1] + delY)*(pv[1] + delY) <= 1) {
 						pv[0] += delX;
@@ -699,7 +699,7 @@ function init() {
 		});
 		hs.addEventListener('mouseup', function() {
 			mouseDown = false;
-			isGrabbingPt = [];
+			isGrabbingPt = -1;
 		});
 		hs.addEventListener('mouseout', function() {
 			mouseDown = false;
