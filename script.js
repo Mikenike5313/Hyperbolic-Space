@@ -1,6 +1,11 @@
 //Error: rounding errors cause points to not be exactly on hyperbola
 
 
+
+
+//TODO: make it so more points can be added
+
+
 //needed to concatonate arrays properly
 Array.prototype.add = function(arr, modify, inReverse) {
 	if(inReverse) {
@@ -38,10 +43,17 @@ var prePts; //vectors before graham schmidt
 var u, //user chosen point on hyperboloid
 	v; //calculated with u
 
+var pu, //poincare u
+	pv; //poincare v
+var isGrabbingPt = []; //bool array storing whether or not point is being grabbed, [pu, pv]
+
+
 var hyperboloidPoints = []; //used to plot hyperboloid
 
 
 var mouseDown = false,
+	mouseX,
+	mouseY,
 	preX,
 	preY;
 
@@ -190,6 +202,25 @@ function projectToPoincare(p) { //projects point onto poincare disc/ball
 		pointcare[d-1] = p[d]/(1+p[0]);
 	}
 	return pointcare;
+}
+
+function backToHyperboloid(p) { //takes poincare point and projects it back onto the hyperboloid
+	var hyp = [];
+
+	var xNumerator = 1; //numerator for coordinate of dimension that hyperboloid extends into
+	var denominator = 1; //denominator for all dimension coordinates
+	for(var d = 0; d < p.length; d++) {
+		var sqr = p[d]*p[d];
+		xNumerator += sqr;
+		denominator -= sqr;
+	}
+
+	hyp[0] = xNumerator/denominator;
+	for(var d = 1; d <= p.length; d++) {
+		hyp[d] = 2*p[d-1]/denominator;
+	}
+
+	return hyp;
 }
 
 
@@ -393,7 +424,7 @@ function drawHyperboloid(ctx, hypDim, ptsPerRev, color) {
 }
 
 function drawHyperboloidGeodesic(ctx, color) { //draws geodesic between u & v on hyperboloid
-	var points = generateGeodesicSamplePoints(3, 0.1);
+	var points = generateGeodesicSamplePoints(100, 0.1);
 	for(var p = 0; p < points.length; p++) {
 		points[p] = scale(scl, linearTransform(points[p], transpose(euBasis)));
 	}
@@ -472,8 +503,8 @@ function displayHS() {
 	//TODO: implement for higher hyperbolic dimensions
 	//			ex. if n=3 make a rotation thing to rotate around the poincare ball
 	drawPoincareGeodesic(hsctx, "pink");
-	displayPoint(hsctx, scale(scl, projectToPoincare(u)), "purple");
-	displayPoint(hsctx, scale(scl, projectToPoincare(prePts[1])), "yellow");
+	displayPoint(hsctx, scale(scl, pu), "purple");
+	displayPoint(hsctx, scale(scl, pv), "yellow");
 }
 
 
@@ -489,6 +520,37 @@ function resize() {
 
 
 //startup
+function initRandomHyperboloidPoints() {
+	prePts = [];
+	for(var i = 0; i < 2; i++) {
+		var angles = [];
+		if(n < 1) {
+			console.log('Error: dimension of hyperbolic manifold cannot be less than 1.');
+			return;
+		}
+		else if(n === 1) {
+			angles[0] = Math.random()*(Math.PI/2) - Math.PI/4;
+		}
+		else if(n > 1) {
+			angles[0] = Math.random()*Math.PI/4;
+			angles[1] = Math.random()*2*Math.PI;
+			for(var a = 2; a < n; a++) {
+				angles[a] = Math.random()*Math.PI;
+			}
+		}
+
+		prePts[i] = getHyperboloidPoint(angles);
+	}
+}
+function initPoints() {
+	var planeBasis = grahamSchmidt(prePts, hyperbolicBilinear);
+
+	u = planeBasis[0];
+	v = planeBasis[1];
+
+	pu = projectToPoincare(u);
+	pv = projectToPoincare(prePts[1]);
+}
 
 function init() {
 	es = document.getElementById('euclidianN+1Space');
@@ -513,48 +575,27 @@ function init() {
 		euBasis.push(b);
 	}
 
-	//pick 2 random points on hyperboloid
+	//pick 2 random points on hyperboloid & init plane basis
+	initRandomHyperboloidPoints();
+	initPoints();
+	
 
-	prePts = [];
-	for(var i = 0; i < 2; i++) {
-		var angles = [];
-		if(n < 1) {
-			console.log('Error: dimension of hyperbolic manifold cannot be less than 1.');
-			return;
-		}
-		else if(n === 1) {
-			angles[0] = Math.random()*(Math.PI/2) - Math.PI/4;
-		}
-		else if(n > 1) {
-			angles[0] = Math.random()*Math.PI/4;
-			angles[1] = Math.random()*2*Math.PI;
-			for(var a = 2; a < n; a++) {
-				angles[a] = Math.random()*Math.PI;
-			}
-		}
-
-		prePts[i] = getHyperboloidPoint(angles);
-	}
-
-	var planeBasis = grahamSchmidt(prePts, hyperbolicBilinear);
-		u = planeBasis[0];
-		v = planeBasis[1];
-
-
-	if(n === 2) { //rotation math only works for 3d simulation
+	if(n === 2) { //rotation math only works for 3d simulation, interactive u & v on the poincare disk only works if n = 2
 		es.addEventListener('mousedown', function(event) {
 			mouseDown = true;
 			preX = window.pageXOffset-es.offsetLeft + event.clientX - es.width/2,
 			preY = -(window.pageYOffset-es.offsetTop + event.clientY - es.height/2);
 		});
 		es.addEventListener('mousemove', function(event) {
+			mouseX = window.pageXOffset-es.offsetLeft + event.clientX - es.width/2,
+			mouseY = -(window.pageYOffset-es.offsetTop + event.clientY - es.height/2);
 			if(mouseDown) {
 
 			    //r needs to enclose points on canvas, or cosAng will be > 1 => BAD
 				//ERROR: for some reason when cosAng = 1, the system breaks, added check below
 
-				var curX = window.pageXOffset-es.offsetLeft + event.clientX - es.width/2,
-					curY = -(window.pageYOffset-es.offsetTop + event.clientY - es.height/2);
+				var curX = mouseX,
+					curY = mouseY;
 
 				var r = (es.width/2)*(es.width/2) + (es.height/2)*(es.height/2) + 1; //ensure no point on canvas is outside of radius
 				//get previous rotation start '3d' coordinates
@@ -600,6 +641,68 @@ function init() {
 			mouseDown = false;
 			preX = null;
 			preY = null;
+		});
+		//
+		hs.addEventListener('mousedown', function(event) {
+			mouseDown = true;
+			preX = window.pageXOffset-hs.offsetLeft + event.clientX - hs.width/2,
+			preY = -(window.pageYOffset-hs.offsetTop + event.clientY - hs.height/2);
+		});
+		hs.addEventListener('mousemove', function(event) {
+			mouseX = window.pageXOffset-hs.offsetLeft + event.clientX - hs.width/2,
+			mouseY = -(window.pageYOffset-hs.offsetTop + event.clientY - hs.height/2);
+			var delX = (mouseX-preX)/scl,
+				delY = (mouseY-preY)/scl;
+			if((Math.round(16*mouseX/scl) == Math.round(16*project(pu, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pu, 2)[1])) || isGrabbingPt[0]) { //mouse over u, *25 to give the mouse a range over which point is grabbable
+				hs.style.cursor = "pointer";
+				if(mouseDown) {
+					isGrabbingPt[0] = true;
+					//n = 2, so:
+					if((pu[0] + delX)*(pu[0] + delX) + (pu[1] + delY)*(pu[1] + delY) <= 1) {
+						pu[0] += delX;
+						pu[1] += delY;
+					}
+
+					prePts[0] = backToHyperboloid(pu);
+					initPoints();
+
+					preX = mouseX;
+					preY = mouseY;
+
+					displayES();
+					displayHS();
+				}
+			}
+			else if((Math.round(16*mouseX/scl) == Math.round(16*project(pv, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pv, 2)[1])) || isGrabbingPt[1]) { //mouse over v, *25 to give the mouse a range over which point is grabbable
+				hs.style.cursor = "pointer";
+				if(mouseDown) {
+					isGrabbingPt[1] = true;
+					//n = 2, so:
+					if((pv[0] + delX)*(pv[0] + delX) + (pv[1] + delY)*(pv[1] + delY) <= 1) {
+						pv[0] += delX;
+						pv[1] += delY;
+					}
+
+					prePts[1] = backToHyperboloid(pv);
+					initPoints();
+
+					preX = mouseX;
+					preY = mouseY;
+
+					displayES();
+					displayHS();
+				}
+			}
+			else {
+				hs.style.cursor = "default";
+			}
+		});
+		hs.addEventListener('mouseup', function() {
+			mouseDown = false;
+			isGrabbingPt = [];
+		});
+		hs.addEventListener('mouseout', function() {
+			mouseDown = false;
 		});
 	}
 
