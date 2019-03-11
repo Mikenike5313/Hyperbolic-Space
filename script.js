@@ -653,7 +653,7 @@ function init() {
 			mouseY = -(window.pageYOffset-hs.offsetTop + event.clientY - hs.height/2);
 			var delX = (mouseX-preX)/scl,
 				delY = (mouseY-preY)/scl;
-			if((Math.round(16*mouseX/scl) == Math.round(16*project(pu, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pu, 2)[1]) && (isGrabbingPt === -1 || isGrabbingPt === undefined)) || isGrabbingPt === 0) { //mouse over u, *25 to give the mouse a range over which point is grabbable
+			if((Math.round(16*mouseX/scl) == Math.round(16*project(pu, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pu, 2)[1]) && (isGrabbingPt === -1 || isGrabbingPt === undefined)) || isGrabbingPt === 0) { //mouse over u, *16 to give the mouse a range over which point is grabbable
 				hs.style.cursor = "pointer";
 				if(mouseDown) {
 					isGrabbingPt = 0;
@@ -673,7 +673,7 @@ function init() {
 					displayHS();
 				}
 			}
-			else if((Math.round(16*mouseX/scl) == Math.round(16*project(pv, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pv, 2)[1]) && (isGrabbingPt === -1 || isGrabbingPt === undefined)) || isGrabbingPt === 1) { //mouse over v, *25 to give the mouse a range over which point is grabbable
+			else if((Math.round(16*mouseX/scl) == Math.round(16*project(pv, 2)[0]) && Math.round(16*mouseY/scl) == Math.round(16*project(pv, 2)[1]) && (isGrabbingPt === -1 || isGrabbingPt === undefined)) || isGrabbingPt === 1) { //mouse over v, *16 to give the mouse a range over which point is grabbable
 				hs.style.cursor = "pointer";
 				if(mouseDown) {
 					isGrabbingPt = 1;
